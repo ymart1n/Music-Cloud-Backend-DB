@@ -116,9 +116,31 @@ public class ProfileController {
 			HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
+		
+		try {
+			DbQueryStatus status = profileDriver.getAllSongFriendsLike(userName);
+			
+			switch (status.getdbQueryExecResult()) {
+			case QUERY_OK:
+				response.put("status", HttpStatus.OK);
+				response.put("data", status.getData());
+				break;
+			case QUERY_ERROR_NOT_FOUND:
+				response.put("status", HttpStatus.NOT_FOUND);
+				break;
+			case QUERY_ERROR_GENERIC:
+				response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+				break;
+			}
+			
+		} catch (Exception e) {
+			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
-		return null;
+		return response;
 	}
 
 
@@ -157,9 +179,29 @@ public class ProfileController {
 			@PathVariable("songId") String songId, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
+		
+		try {
+			DbQueryStatus status = playlistDriver.likeSong(userName, songId);
+			
+			switch (status.getdbQueryExecResult()) {
+			case QUERY_OK:
+				response.put("status", HttpStatus.OK);
+				break;
+			case QUERY_ERROR_NOT_FOUND:
+				response.put("status", HttpStatus.NOT_FOUND);
+				break;
+			case QUERY_ERROR_GENERIC:
+				response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+				break;
+			}
+			
+		} catch (Exception e) {
+			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-
-		return null;
+		
+		return response;
 	}
 
 	@RequestMapping(value = "/unlikeSong/{userName}/{songId}", method = RequestMethod.PUT)
@@ -167,9 +209,29 @@ public class ProfileController {
 			@PathVariable("songId") String songId, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
+		
+		try {
+			DbQueryStatus status = playlistDriver.unlikeSong(userName, songId);
+			
+			switch (status.getdbQueryExecResult()) {
+			case QUERY_OK:
+				response.put("status", HttpStatus.OK);
+				break;
+			case QUERY_ERROR_NOT_FOUND:
+				response.put("status", HttpStatus.NOT_FOUND);
+				break;
+			case QUERY_ERROR_GENERIC:
+				response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+				break;
+			}
+			
+		} catch (Exception e) {
+			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-
-		return null;
+		
+		return response;
 	}
 
 	@RequestMapping(value = "/deleteAllSongsFromDb/{songId}", method = RequestMethod.PUT)
@@ -177,8 +239,28 @@ public class ProfileController {
 			HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
+		
+		try {
+			DbQueryStatus status = playlistDriver.deleteSongFromDb(songId);
+			
+			switch (status.getdbQueryExecResult()) {
+			case QUERY_OK:
+				response.put("status", HttpStatus.OK);
+				break;
+			case QUERY_ERROR_NOT_FOUND:
+				response.put("status", HttpStatus.NOT_FOUND);
+				break;
+			case QUERY_ERROR_GENERIC:
+				response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+				break;
+			}
+			
+		} catch (Exception e) {
+			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		
-		return null;
+		return response;
 	}
 }

@@ -55,7 +55,6 @@ public class ProfileDriverImpl implements ProfileDriver {
 				
 				trans.success();
 				
-				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
 			}
 			
 			try (Transaction trans = session.beginTransaction()) {
@@ -64,7 +63,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 				
 				trans.run("MERGE (nPlaylist:playlist {plName: $plName})", params);
 				trans.success();
-				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+
 			}
 			
 			try (Transaction trans = session.beginTransaction()) {
@@ -99,7 +98,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 				params.put("frndUserName", frndUserName);
 				
 				trans.run("MATCH (a:profile {userName: $userName})," + "(b:profile {userName: $frndUserName})\n" 
-						+ "MERGE (a)-[f:following]->(b)" + "RETURN f", params);
+						+ "MERGE (a)-[f:follows]->(b)" + "RETURN f", params);
 				
 				trans.success();
 				
@@ -125,7 +124,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 				params.put("frndUserName", frndUserName);
 				
 				trans.run("MATCH (a:profile {userName: $userName})," + "(b:profile {userName: $frndUserName})\n" 
-						+ "MATCH (a)-[f:following]->(b)" + "DELETE f", params);
+						+ "MATCH (a)-[f:follows]->(b)" + "DELETE f", params);
 				
 				trans.success();
 				
@@ -141,6 +140,58 @@ public class ProfileDriverImpl implements ProfileDriver {
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
 			
-		return null;
+		DbQueryStatus status = new DbQueryStatus("Get all song friends like", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		
+		ArrayList<String> friends = new ArrayList<>();
+		
+		Map<String, ArrayList<String>> data = new HashMap<>();
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				
+				StatementResult friendNames = trans.run("MATCH (nProfile:profile { userName: $userName })-[f:follows]->(profile)\n" 
+						+ "RETURN profile.userName", params);
+				
+				String friendName = "";
+                while (friendNames.hasNext()){
+                    friendName = friendNames.next().get("profile.userName").asString();
+                    friends.add(friendName);
+                }
+				
+				trans.success();
+			}
+			
+			for (String f : friends) {
+				try (Transaction trans = session.beginTransaction()) {
+					
+					Map<String, Object> params = new HashMap<>();
+					params.put("userName", f);
+					
+					StatementResult songIds = trans.run("MATCH (nProfile:profile { userName: $userName })-[c:created]->(playlist)-[i:includes]->(song)\n" 
+							+ "RETURN song.songId", params);
+					
+					String songId = "";
+					ArrayList<String> songs = new ArrayList<>();
+	                while (songIds.hasNext()){
+	                	songId = songIds.next().get("song.songId").asString();
+	                	songs.add(songId);
+	                }
+	                
+	                data.put(f, songs);
+					
+					trans.success();
+				}
+			}
+			
+			status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+			status.setData(data);
+			
+			session.close();
+		}
+		
+		return status;
 	}
 }

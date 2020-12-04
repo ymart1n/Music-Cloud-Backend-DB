@@ -1,5 +1,8 @@
 package com.csc301.profilemicroservice;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
@@ -26,19 +29,92 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 	@Override
 	public DbQueryStatus likeSong(String userName, String songId) {
-
-		return null;
+		
+		DbQueryStatus status = new DbQueryStatus("Like a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				Map<String, Object> params = new HashMap<>();
+				params.put("songId", songId);
+				
+				trans.run("MERGE (nSong:song { songId: $songId })", params);
+				
+				trans.success();
+				
+			}
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				Map<String, Object> params = new HashMap<>();
+				params.put("plName", userName+"-favorites");
+				params.put("songId", songId);
+				
+				trans.run("MATCH (a:playlist { plName: $plName })," + "(b:song { songId: $songId })\n" 
+						+ "MERGE (a)-[i:includes]->(b)" + "RETURN i", params);
+				
+				trans.success();
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+				
+			}
+			
+			session.close();
+		}
+		
+		return status;
 	}
 
 	@Override
 	public DbQueryStatus unlikeSong(String userName, String songId) {
 		
-		return null;
+		DbQueryStatus status = new DbQueryStatus("Unlike a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				
+				Map<String, Object> params = new HashMap<>();
+				params.put("plName", userName+"-favorites");
+				params.put("songId", songId);
+				
+				trans.run("MATCH (a:playlist { plName: $plName })," + "(b:song { songId: $songId })\n" 
+						+ "MATCH (a)-[i:includes]->(b)" + "DELETE i", params);
+				
+				trans.success();
+				
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+			}
+			
+			session.close();
+		}
+		
+		return status;
 	}
 
 	@Override
 	public DbQueryStatus deleteSongFromDb(String songId) {
 		
-		return null;
+		DbQueryStatus status = new DbQueryStatus("Delete a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				
+				Map<String, Object> params = new HashMap<>();
+				params.put("songId", songId);
+				
+				// Delete all the relationships with this song node first
+				trans.run("MATCH (a:song { songId: $songId })<-[i:includes]-(playlist)\n" + "DELETE i", params);
+				trans.run("MATCH (a:song { songId: $songId })\n" + "DELETE a", params);
+				
+				trans.success();
+				
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+			}
+			
+			session.close();
+		}
+		
+		return status;
 	}
 }

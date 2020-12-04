@@ -55,13 +55,27 @@ public class ProfileController {
 		String fullName = params.get(KEY_USER_FULLNAME);
 		String password = params.get(KEY_USER_PASSWORD);
 		
+		Map<String, Object> response = new HashMap<String, Object>();
+		
 		try {
 			DbQueryStatus status = profileDriver.createUserProfile(userName, fullName, password);
-		} catch (Exception e) {
 			
+			switch (status.getdbQueryExecResult()) {
+			case QUERY_OK:
+				response.put("status", HttpStatus.OK);
+				break;
+			case QUERY_ERROR_NOT_FOUND:
+				response.put("status", HttpStatus.NOT_FOUND);
+				break;
+			case QUERY_ERROR_GENERIC:
+				response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+				break;
+			}
+			
+		} catch (Exception e) {
+			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
-		Map<String, Object> response = new HashMap<String, Object>();
+		
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
 
 		return response;
@@ -70,11 +84,31 @@ public class ProfileController {
 	@RequestMapping(value = "/followFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> followFriend(@PathVariable("userName") String userName,
 			@PathVariable("friendUserName") String friendUserName, HttpServletRequest request) {
-
+		
 		Map<String, Object> response = new HashMap<String, Object>();
+		
+		try {
+			DbQueryStatus status = profileDriver.followFriend(userName, friendUserName);
+			
+			switch (status.getdbQueryExecResult()) {
+			case QUERY_OK:
+				response.put("status", HttpStatus.OK);
+				break;
+			case QUERY_ERROR_NOT_FOUND:
+				response.put("status", HttpStatus.NOT_FOUND);
+				break;
+			case QUERY_ERROR_GENERIC:
+				response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+				break;
+			}
+			
+		} catch (Exception e) {
+			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		
-		return null;
+		return response;
 	}
 
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)
@@ -93,9 +127,29 @@ public class ProfileController {
 			@PathVariable("friendUserName") String friendUserName, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
+		
+		try {
+			DbQueryStatus status = profileDriver.unfollowFriend(userName, friendUserName);
+			
+			switch (status.getdbQueryExecResult()) {
+			case QUERY_OK:
+				response.put("status", HttpStatus.OK);
+				break;
+			case QUERY_ERROR_NOT_FOUND:
+				response.put("status", HttpStatus.NOT_FOUND);
+				break;
+			case QUERY_ERROR_GENERIC:
+				response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+				break;
+			}
+			
+		} catch (Exception e) {
+			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-
-		return null;
+		
+		return response;
 	}
 
 	@RequestMapping(value = "/likeSong/{userName}/{songId}", method = RequestMethod.PUT)

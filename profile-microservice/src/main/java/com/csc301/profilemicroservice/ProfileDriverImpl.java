@@ -41,19 +41,101 @@ public class ProfileDriverImpl implements ProfileDriver {
 	@Override
 	public DbQueryStatus createUserProfile(String userName, String fullName, String password) {
 		
-		return null;
+		DbQueryStatus status = new DbQueryStatus("Creating Profile", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				params.put("fullName", fullName);
+				params.put("password", password);
+				
+				trans.run("MERGE (nProfile:profile {userName: $userName, fullName: $fullName, password: $password})", params);
+				
+				trans.success();
+				
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+			}
+			
+			try (Transaction trans = session.beginTransaction()) {
+				Map<String, Object> params = new HashMap<>();
+				params.put("plName", userName+"-favorites");
+				
+				trans.run("MERGE (nPlaylist:playlist {plName: $plName})", params);
+				trans.success();
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+			}
+			
+			try (Transaction trans = session.beginTransaction()) {
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				params.put("fullName", fullName);
+				params.put("password", password);
+				params.put("plName", userName+"-favorites");
+				
+				trans.run("MATCH (a:profile {userName: $userName, fullName: $fullName, password: $password}),"
+						+ "(b:playlist {plName: $plName})\n" + "MERGE (a)-[c:created]->(b)" + "RETURN c", params);
+				trans.success();
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+			}
+			
+			session.close();
+		}
+		
+		return status;
 	}
 
 	@Override
 	public DbQueryStatus followFriend(String userName, String frndUserName) {
 		
-		return null;
+		DbQueryStatus status = new DbQueryStatus("Follow a friend", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				params.put("frndUserName", frndUserName);
+				
+				trans.run("MATCH (a:profile {userName: $userName})," + "(b:profile {userName: $frndUserName})\n" 
+						+ "MERGE (a)-[f:following]->(b)" + "RETURN f", params);
+				
+				trans.success();
+				
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+			}
+			
+			session.close();
+		}
+		
+		return status;
 	}
 
 	@Override
 	public DbQueryStatus unfollowFriend(String userName, String frndUserName) {
 		
-		return null;
+		DbQueryStatus status = new DbQueryStatus("Unfollow a friend", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				params.put("frndUserName", frndUserName);
+				
+				trans.run("MATCH (a:profile {userName: $userName})," + "(b:profile {userName: $frndUserName})\n" 
+						+ "MATCH (a)-[f:following]->(b)" + "DELETE f", params);
+				
+				trans.success();
+				
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+			}
+			
+			session.close();
+		}
+		
+		return status;
 	}
 
 	@Override

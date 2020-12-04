@@ -51,15 +51,20 @@ public class ProfileController {
 	public @ResponseBody Map<String, Object> addProfile(@RequestParam Map<String, String> params,
 			HttpServletRequest request) {
 		
+		// Get necessary variables from params
 		String userName = params.get(KEY_USER_NAME);
 		String fullName = params.get(KEY_USER_FULLNAME);
 		String password = params.get(KEY_USER_PASSWORD);
 		
+		// creating response
 		Map<String, Object> response = new HashMap<String, Object>();
 		
 		try {
+			// call the query in profile driver
 			DbQueryStatus status = profileDriver.createUserProfile(userName, fullName, password);
 			
+			// switch between different cases based on db query execution result
+			// and put corresponding status into response
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
@@ -76,7 +81,7 @@ public class ProfileController {
 			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		response.put("path", String.format("POST %s", Utils.getUrl(request)));
+//		response.put("path", String.format("POST %s", Utils.getUrl(request)));
 
 		return response;
 	}
@@ -88,8 +93,11 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		
 		try {
+			// call the query in profile driver
 			DbQueryStatus status = profileDriver.followFriend(userName, friendUserName);
 			
+			// switch between different cases based on db query execution result
+			// and put corresponding status into response
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
@@ -106,7 +114,7 @@ public class ProfileController {
 			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+//		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		
 		return response;
 	}
@@ -118,11 +126,15 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		
 		try {
+			// call the query in profile driver
 			DbQueryStatus status = profileDriver.getAllSongFriendsLike(userName);
 			
+			// switch between different cases based on db query execution result
+			// and put corresponding status into response
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
+				// put userName: songs[] data we obtained in getAllSongFriends() into response
 				response.put("data", status.getData());
 				break;
 			case QUERY_ERROR_NOT_FOUND:
@@ -138,7 +150,7 @@ public class ProfileController {
 		}
 		
 		
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+//		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
 		return response;
 	}
@@ -151,8 +163,11 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		
 		try {
+			// call the query in profile driver
 			DbQueryStatus status = profileDriver.unfollowFriend(userName, friendUserName);
 			
+			// switch between different cases based on db query execution result
+			// and put corresponding status into response
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
@@ -169,7 +184,7 @@ public class ProfileController {
 			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+//		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		
 		return response;
 	}
@@ -181,8 +196,11 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		
 		try {
+			// call the query in playlist driver
 			DbQueryStatus status = playlistDriver.likeSong(userName, songId);
 			
+			// switch between different cases based on db query execution result
+			// and put corresponding status into response
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
@@ -199,7 +217,7 @@ public class ProfileController {
 			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+//		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		
 		return response;
 	}
@@ -211,8 +229,11 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		
 		try {
+			// call the query in playlist driver
 			DbQueryStatus status = playlistDriver.unlikeSong(userName, songId);
 			
+			// switch between different cases based on db query execution result
+			// and put corresponding status into response
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
@@ -229,7 +250,7 @@ public class ProfileController {
 			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+//		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		
 		return response;
 	}
@@ -241,8 +262,11 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		
 		try {
+			// call the query in playlist driver
 			DbQueryStatus status = playlistDriver.deleteSongFromDb(songId);
 			
+			// switch between different cases based on db query execution result
+			// and put corresponding status into response
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
@@ -259,7 +283,7 @@ public class ProfileController {
 			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+//		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 		
 		return response;
 	}

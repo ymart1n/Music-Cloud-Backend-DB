@@ -30,16 +30,17 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	@Override
 	public DbQueryStatus likeSong(String userName, String songId) {
 		
+		// Creating a new DbQueryStatus
 		DbQueryStatus status = new DbQueryStatus("Like a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
-			
-			
 			try (Transaction trans = session.beginTransaction()) {
 				
+				// initialize params
 				Map<String, Object> params = new HashMap<>();
 				params.put("songId", songId);
 				
+				// create a new song node
 				trans.run("MERGE (nSong:song { songId: $songId })", params);
 				
 				trans.success();
@@ -48,14 +49,17 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			
 			try (Transaction trans = session.beginTransaction()) {
 				
+				// initialize params
 				Map<String, Object> params = new HashMap<>();
 				params.put("plName", userName+"-favorites");
 				params.put("songId", songId);
 				
+				// create a directed relation :created from a playlist node to the song node
 				trans.run("MATCH (a:playlist { plName: $plName })," + "(b:song { songId: $songId })\n" 
 						+ "MERGE (a)-[i:includes]->(b)" + "RETURN i", params);
 				
 				trans.success();
+				// set query result to ok if success
 				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
 				
 			}
@@ -69,20 +73,23 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	@Override
 	public DbQueryStatus unlikeSong(String userName, String songId) {
 		
+		// Creating a new DbQueryStatus
 		DbQueryStatus status = new DbQueryStatus("Unlike a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
 			try (Transaction trans = session.beginTransaction()) {
 				
+				// initialize params
 				Map<String, Object> params = new HashMap<>();
 				params.put("plName", userName+"-favorites");
 				params.put("songId", songId);
 				
+				// delete a directed relation :created from a playlist node to the song node
 				trans.run("MATCH (a:playlist { plName: $plName })," + "(b:song { songId: $songId })\n" 
 						+ "MATCH (a)-[i:includes]->(b)" + "DELETE i", params);
 				
 				trans.success();
-				
+				// set query result to ok if success
 				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
 			}
 			
@@ -95,20 +102,23 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	@Override
 	public DbQueryStatus deleteSongFromDb(String songId) {
 		
+		// Creating a new DbQueryStatus
 		DbQueryStatus status = new DbQueryStatus("Delete a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
 			try (Transaction trans = session.beginTransaction()) {
 				
+				// initialize params
 				Map<String, Object> params = new HashMap<>();
 				params.put("songId", songId);
 				
 				// Delete all the relationships with this song node first
 				trans.run("MATCH (a:song { songId: $songId })<-[i:includes]-(playlist)\n" + "DELETE i", params);
+				// delete the song node from db
 				trans.run("MATCH (a:song { songId: $songId })\n" + "DELETE a", params);
 				
 				trans.success();
-				
+				// set query result to ok if success
 				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
 			}
 			

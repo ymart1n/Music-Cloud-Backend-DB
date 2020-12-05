@@ -16,8 +16,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import javax.servlet.http.HttpServletRequest;
@@ -82,6 +84,35 @@ public class SongController {
 
         response.put("message", dbQueryStatus.getMessage());
         response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+        
+        if (dbQueryStatus.getMessage() == null) {
+        	HttpUrl.Builder deleteSongUrl = HttpUrl.parse("http://localhost:3002" 
+					+ "/deleteAllSongsFromDb/" + songId).newBuilder();
+        	String url = deleteSongUrl.build().toString();
+
+//        	System.out.println(url);
+
+        	RequestBody body = RequestBody.create(null, new byte[0]);
+        	ObjectMapper mapper = new ObjectMapper();
+
+			Request deleteSongRequest = new Request.Builder()
+			.url(url)
+			.method("DELETE", body)
+			.build();
+			
+			Call call = client.newCall(deleteSongRequest);
+			Response responseFromDeleteSong = null;
+			
+			String profileServiceBody = "{}";
+			
+			try {
+				responseFromDeleteSong = call.execute();
+				profileServiceBody = responseFromDeleteSong.body().string();
+				response.put("data", mapper.readValue(profileServiceBody, Map.class));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
 
         return response;
 

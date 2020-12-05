@@ -13,6 +13,7 @@ import com.csc301.profilemicroservice.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -134,8 +135,45 @@ public class ProfileController {
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
-				// put userName: songs[] data we obtained in getAllSongFriends() into response
-				response.put("data", status.getData());
+				
+				Map<String, ArrayList<String>> playlists = (Map<String, ArrayList<String>>) status.getData();
+
+				for (Map.Entry<String, ArrayList<String>> playlist : playlists.entrySet()) {
+					ArrayList<String> songIds = playlist.getValue();
+					
+					for (int i=0; i < songIds.size(); i++) {
+						HttpUrl.Builder getSongTitleUrl = HttpUrl.parse("http://localhost:3001" 
+								+ "/getSongTitleById/" + songIds.get(i)).newBuilder();
+						String url = getSongTitleUrl.build().toString();
+						
+//						System.out.println(url);
+
+						ObjectMapper mapper = new ObjectMapper();
+
+						Request getSongTitleRequest = new Request.Builder()
+														.url(url)
+														.method("GET", null)
+														.build();
+
+						Call call = client.newCall(getSongTitleRequest);
+						Response responseFromGetTitle = null;
+						
+						String songServiceBody = "{}";
+						
+						try {
+							responseFromGetTitle = call.execute();
+							songServiceBody = responseFromGetTitle.body().string();
+							songIds.set(i, (String) mapper.readValue(songServiceBody, Map.class).get("data"));
+							
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				
+				}
+				
+				response.put("data", playlists);
+				
 				break;
 			case QUERY_ERROR_NOT_FOUND:
 				response.put("status", HttpStatus.NOT_FOUND);
@@ -146,6 +184,7 @@ public class ProfileController {
 			}
 			
 		} catch (Exception e) {
+			e.printStackTrace();
 			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
@@ -204,6 +243,36 @@ public class ProfileController {
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
+				if (!status.getMessage().equals("Song is already liked")) {
+					HttpUrl.Builder updateSongFavUrl = HttpUrl.parse("http://localhost:3001" 
+															+ "/updateSongFavouritesCount/" + songId).newBuilder();
+					updateSongFavUrl.addQueryParameter("shouldDecrement", "false");
+					String url = updateSongFavUrl.build().toString();
+					
+//					System.out.println(url);
+					
+					RequestBody body = RequestBody.create(null, new byte[0]);
+					ObjectMapper mapper = new ObjectMapper();
+
+					Request updateFavRequest = new Request.Builder()
+							.url(url)
+							.method("PUT", body)
+							.build();
+					
+					Call call = client.newCall(updateFavRequest);
+					Response responseFromUpdateFav = null;
+					
+					String songServiceBody = "{}";
+
+					try {
+						responseFromUpdateFav = call.execute();
+						songServiceBody = responseFromUpdateFav.body().string();
+						response.put("data", mapper.readValue(songServiceBody, Map.class));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+				}
 				break;
 			case QUERY_ERROR_NOT_FOUND:
 				response.put("status", HttpStatus.NOT_FOUND);
@@ -237,6 +306,36 @@ public class ProfileController {
 			switch (status.getdbQueryExecResult()) {
 			case QUERY_OK:
 				response.put("status", HttpStatus.OK);
+				if (!status.getMessage().equals("Song has not been liked")) {
+					HttpUrl.Builder updateSongFavUrl = HttpUrl.parse("http://localhost:3001" 
+															+ "/updateSongFavouritesCount/" + songId).newBuilder();
+					updateSongFavUrl.addQueryParameter("shouldDecrement", "true");
+					String url = updateSongFavUrl.build().toString();
+					
+//					System.out.println(url);
+					
+					RequestBody body = RequestBody.create(null, new byte[0]);
+					ObjectMapper mapper = new ObjectMapper();
+
+					Request updateFavRequest = new Request.Builder()
+							.url(url)
+							.method("PUT", body)
+							.build();
+					
+					Call call = client.newCall(updateFavRequest);
+					Response responseFromUpdateFav = null;
+					
+					String songServiceBody = "{}";
+
+					try {
+						responseFromUpdateFav = call.execute();
+						songServiceBody = responseFromUpdateFav.body().string();
+						response.put("data", mapper.readValue(songServiceBody, Map.class));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+				}
 				break;
 			case QUERY_ERROR_NOT_FOUND:
 				response.put("status", HttpStatus.NOT_FOUND);
@@ -255,7 +354,7 @@ public class ProfileController {
 		return response;
 	}
 
-	@RequestMapping(value = "/deleteAllSongsFromDb/{songId}", method = RequestMethod.PUT)
+	@RequestMapping(value = "/deleteAllSongsFromDb/{songId}", method = RequestMethod.DELETE)
 	public @ResponseBody Map<String, Object> deleteAllSongsFromDb(@PathVariable("songId") String songId,
 			HttpServletRequest request) {
 

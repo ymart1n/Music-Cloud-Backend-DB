@@ -54,6 +54,27 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				params.put("plName", userName+"-favorites");
 				params.put("songId", songId);
 				
+				// See if the relation exists
+				StatementResult result = trans.run("MATCH (a:playlist { plName: $plName })-[i:includes]->(b:song { songId: $songId })\n" 
+						+ "RETURN a", params);
+				
+				if (result.hasNext()) {
+					return new DbQueryStatus("Song is already liked", DbQueryExecResult.QUERY_OK);
+				} 
+				
+				trans.success();
+				// set query result to ok if success
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+				
+			}
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				// initialize params
+				Map<String, Object> params = new HashMap<>();
+				params.put("plName", userName+"-favorites");
+				params.put("songId", songId);
+				
 				// create a directed relation :created from a playlist node to the song node
 				trans.run("MATCH (a:playlist { plName: $plName })," + "(b:song { songId: $songId })\n" 
 						+ "MERGE (a)-[i:includes]->(b)" + "RETURN i", params);
@@ -77,6 +98,28 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		DbQueryStatus status = new DbQueryStatus("Unlike a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				// initialize params
+				Map<String, Object> params = new HashMap<>();
+				params.put("plName", userName+"-favorites");
+				params.put("songId", songId);
+				
+				// See if the relation exists
+				StatementResult result = trans.run("MATCH (a:playlist { plName: $plName })-[i:includes]->(b:song { songId: $songId })\n" 
+						+ "RETURN a", params);
+				
+				if (!result.hasNext()) {
+					return new DbQueryStatus("Song has not been liked", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+				} 
+				
+				trans.success();
+				// set query result to ok if success
+				status.setdbQueryExecResult(DbQueryExecResult.QUERY_OK);
+				
+			}
+			
 			try (Transaction trans = session.beginTransaction()) {
 				
 				// initialize params

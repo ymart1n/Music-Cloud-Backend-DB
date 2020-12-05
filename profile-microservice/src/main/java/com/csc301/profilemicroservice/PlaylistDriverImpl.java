@@ -34,6 +34,26 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		DbQueryStatus status = new DbQueryStatus("Like a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				// initialize params
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				
+				// create a directed relation :follows from a profile node to the other profile node
+				StatementResult userNames = trans.run("MATCH (a:profile {userName: $userName})\n" + "RETURN a" , params);
+				
+				trans.success();
+				
+				if (!userNames.hasNext()) {
+					// set query result to ok if success
+					status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					return status;
+				}
+				
+			}
+			
 			try (Transaction trans = session.beginTransaction()) {
 				
 				// initialize params
@@ -98,6 +118,25 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		DbQueryStatus status = new DbQueryStatus("Unlike a song", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				// initialize params
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				
+				// create a directed relation :follows from a profile node to the other profile node
+				StatementResult userNames = trans.run("MATCH (a:profile {userName: $userName})\n" + "RETURN a" , params);
+				
+				trans.success();
+				
+				if (!userNames.hasNext()) {
+					// set query result to ok if success
+					status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					return status;
+				}
+				
+			}
 			
 			try (Transaction trans = session.beginTransaction()) {
 				

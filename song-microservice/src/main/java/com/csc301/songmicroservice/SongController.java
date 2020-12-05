@@ -90,7 +90,7 @@ public class SongController {
 					+ "/deleteAllSongsFromDb/" + songId).newBuilder();
         	String url = deleteSongUrl.build().toString();
 
-        	System.out.println(url);
+//        	System.out.println(url);
 
         	RequestBody body = RequestBody.create(null, new byte[0]);
         	ObjectMapper mapper = new ObjectMapper();

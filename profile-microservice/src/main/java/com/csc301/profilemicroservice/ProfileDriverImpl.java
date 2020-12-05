@@ -99,9 +99,54 @@ public class ProfileDriverImpl implements ProfileDriver {
 	public DbQueryStatus followFriend(String userName, String frndUserName) {
 		
 		// Creating a new DbQueryStatus
-		DbQueryStatus status = new DbQueryStatus("Follow a friend", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		DbQueryStatus status = new DbQueryStatus("", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		
+		if (userName.equals(frndUserName)) {
+			status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_GENERIC);
+			status.setMessage("You cannot follow yourself.");
+			return status;
+		}
 		
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				// initialize params
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				
+				// create a directed relation :follows from a profile node to the other profile node
+				StatementResult userNames = trans.run("MATCH (a:profile {userName: $userName})\n" + "RETURN a" , params);
+				
+				trans.success();
+				
+				if (!userNames.hasNext()) {
+					// set query result to ok if success
+					status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					return status;
+				}
+				
+			}
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				// initialize params
+				Map<String, Object> params = new HashMap<>();
+				params.put("frndUserName", frndUserName);
+				
+				// create a directed relation :follows from a profile node to the other profile node
+				StatementResult frndUserNames = trans.run("MATCH (a:profile {userName: $frndUserName})\n" + "RETURN a" , params);
+				
+				trans.success();
+				
+				if (!frndUserNames.hasNext()) {
+					// set query result to ok if success
+					status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					return status;
+				}
+				
+			}
+			
 			try (Transaction trans = session.beginTransaction()) {
 				
 				// initialize params
@@ -131,7 +176,52 @@ public class ProfileDriverImpl implements ProfileDriver {
 		// Creating a new DbQueryStatus
 		DbQueryStatus status = new DbQueryStatus("Unfollow a friend", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		
+		if (userName.equals(frndUserName)) {
+			status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_GENERIC);
+			status.setMessage("You cannot follow yourself.");
+			return status;
+		}
+		
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				// initialize params
+				Map<String, Object> params = new HashMap<>();
+				params.put("userName", userName);
+				
+				// create a directed relation :follows from a profile node to the other profile node
+				StatementResult userNames = trans.run("MATCH (a:profile {userName: $userName})\n" + "RETURN a" , params);
+				
+				trans.success();
+				
+				if (!userNames.hasNext()) {
+					// set query result to ok if success
+					status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					return status;
+				}
+				
+			}
+			
+			try (Transaction trans = session.beginTransaction()) {
+				
+				// initialize params
+				Map<String, Object> params = new HashMap<>();
+				params.put("frndUserName", frndUserName);
+				
+				// create a directed relation :follows from a profile node to the other profile node
+				StatementResult frndUserNames = trans.run("MATCH (a:profile {userName: $frndUserName})\n" + "RETURN a" , params);
+				
+				trans.success();
+				
+				if (!frndUserNames.hasNext()) {
+					// set query result to ok if success
+					status.setdbQueryExecResult(DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+					return status;
+				}
+				
+			}
+			
 			try (Transaction trans = session.beginTransaction()) {
 				
 				// initialize params

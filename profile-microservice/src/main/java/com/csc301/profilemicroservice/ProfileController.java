@@ -112,6 +112,7 @@ public class ProfileController {
 			}
 			
 		} catch (Exception e) {
+			e.printStackTrace();
 			response.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
@@ -234,6 +235,39 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		
+		HttpUrl.Builder getSongUrl = HttpUrl.parse("http://localhost:3001" 
+				+ "/getSongById/" + songId).newBuilder();
+		
+		String getsongurl = getSongUrl.build().toString();
+		
+		ObjectMapper getSongMapper = new ObjectMapper();
+		
+		Request getSongRequest = new Request.Builder()
+						.url(getsongurl)
+						.method("GET", null)
+						.build();
+						
+		Call getSongCall = client.newCall(getSongRequest);
+		Response responseFromGetSong = null;
+		
+		String songServiceBodyForGetSong = "{}";
+		
+		try {
+			responseFromGetSong = getSongCall.execute();
+			songServiceBodyForGetSong = responseFromGetSong.body().string();
+//			response.put("data", getSongMapper.readValue(songServiceBodyForGetSong, Map.class));
+			
+			if (getSongMapper.readValue(songServiceBodyForGetSong, Map.class).get("message") != null) {
+//				response.put("message", "Song Does not Exist");
+				response = Utils.setResponseStatus(response, DbQueryExecResult.QUERY_ERROR_NOT_FOUND, null);
+				return response;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
 		try {
 			// call the query in playlist driver
 			DbQueryStatus status = playlistDriver.likeSong(userName, songId);
@@ -267,7 +301,7 @@ public class ProfileController {
 					try {
 						responseFromUpdateFav = call.execute();
 						songServiceBody = responseFromUpdateFav.body().string();
-						response.put("data", mapper.readValue(songServiceBody, Map.class));
+//						response.put("data", mapper.readValue(songServiceBody, Map.class));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -330,7 +364,7 @@ public class ProfileController {
 					try {
 						responseFromUpdateFav = call.execute();
 						songServiceBody = responseFromUpdateFav.body().string();
-						response.put("data", mapper.readValue(songServiceBody, Map.class));
+//						response.put("data", mapper.readValue(songServiceBody, Map.class));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}

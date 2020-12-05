@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+
 @RestController
 @RequestMapping("/")
 public class ProfileController {
@@ -49,11 +50,21 @@ public class ProfileController {
 	@RequestMapping(value = "/profile", method = RequestMethod.POST)
 	public @ResponseBody Map<String, Object> addProfile(@RequestParam Map<String, String> params,
 			HttpServletRequest request) {
+		
+		String userName = params.get(KEY_USER_NAME);
+		String fullName = params.get(KEY_USER_FULLNAME);
+		String password = params.get(KEY_USER_PASSWORD);
+		
+		try {
+			DbQueryStatus status = profileDriver.createUserProfile(userName, fullName, password);
+		} catch (Exception e) {
+			
+		}
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
 
-		return null;
+		return response;
 	}
 
 	@RequestMapping(value = "/followFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)

@@ -59,8 +59,14 @@ public class SongController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("GET %s", Utils.getUrl(request)));
+		
+		DbQueryStatus dbQueryStatus = songDal.getSongTitleById(songId);
 
-		return null;
+        response.put("message", dbQueryStatus.getMessage());
+        response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+
+        return response;
+
 	}
 
 	
@@ -70,8 +76,15 @@ public class SongController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("DELETE %s", Utils.getUrl(request)));
+		
+		//Dependent on Profile
+		DbQueryStatus dbQueryStatus = songDal.deleteSongById(songId);
 
-		return null;
+        response.put("message", dbQueryStatus.getMessage());
+        response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+
+        return response;
+
 	}
 
 	
@@ -81,8 +94,19 @@ public class SongController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
-
-		return null;
+	
+		Song songToAdd;
+	
+		if (params.containsKey("songName") && params.containsKey("songArtistFullName") && params.containsKey("songAlbum")) {
+		  songToAdd = new Song(params.get("songName"), params.get("songArtistFullName"), params.get("songAlbum"));
+		} else {
+		  songToAdd = new Song("", "", "");
+		}
+		
+		DbQueryStatus dbQueryStatus = songDal.addSong(songToAdd);
+		response.put("message", dbQueryStatus.getMessage());
+		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), (Object)dbQueryStatus.getData());
+		return response;
 	}
 
 	
@@ -91,8 +115,22 @@ public class SongController {
 			@RequestParam("shouldDecrement") String shouldDecrement, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("data", String.format("PUT %s", Utils.getUrl(request)));
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+		
+		DbQueryStatus dbQueryStatus;
 
-		return null;
+		//Profile Dependency
+		if (shouldDecrement.equals("true")) {
+		  dbQueryStatus = songDal.updateSongFavouritesCount(songId, true);
+		} else if (shouldDecrement.equals("false")){
+		  dbQueryStatus = songDal.updateSongFavouritesCount(songId, false);
+		} else {
+		  dbQueryStatus = new DbQueryStatus("Decrement not specified", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+        
+        response.put("message", dbQueryStatus.getMessage());
+        response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+
+        return response;
 	}
 }
